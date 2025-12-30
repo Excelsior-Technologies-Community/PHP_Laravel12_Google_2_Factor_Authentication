@@ -1,59 +1,274 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PHP_Laravel12_Google_2_Factor_Authentication
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
 
-## About Laravel
+This project demonstrates a complete implementation of Google Two-Factor Authentication (2FA) in Laravel 12. It includes QR code generation, recovery codes, and a secure login verification flow. The goal of this project is to show how 2FA can be integrated into a Laravel application to enhance account security.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This implementation is suitable for learning, interviews, and real-world applications with further customization.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* Google Authenticator integration
+* QR code generation for easy 2FA setup
+* Recovery code generation and management
+* Secure two-step login verification flow
+* Enable and disable 2FA functionality
+* Session-based 2FA verification handling
+* User-friendly Blade-based interface
 
-## Learning Laravel
+## Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+* PHP 8.1 or higher
+* Composer
+* Laravel 12
+* MySQL or compatible database
+* Node.js and NPM (for frontend assets)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-## Laravel Sponsors
+### 1. Clone the Repository
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+git clone https://github.com/your-username/laravel-12-google-2fa.git
+cd laravel-12-google-2fa
+```
 
-### Premium Partners
+### 2. Install PHP Dependencies
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+composer install
+```
 
-## Contributing
+### 3. Install Required Packages
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer require pragmarx/google2fa-laravel
+composer require bacon/bacon-qr-code
+```
 
-## Code of Conduct
+### 4. Install Authentication Scaffolding (Optional)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Laravel Breeze is recommended for basic authentication scaffolding.
 
-## Security Vulnerabilities
+```bash
+composer require laravel/breeze --dev
+php artisan breeze:install blade
+npm install && npm run build
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 5. Configure Environment
+
+Create and configure the environment file.
+
+```bash
+cp .env.example .env
+```
+
+Update database credentials in `.env`:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_2fa
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 6. Generate Application Key
+
+```bash
+php artisan key:generate
+```
+
+### 7. Run Migrations
+
+```bash
+php artisan migrate
+```
+
+## Project Structure
+
+```
+laravel-2fa/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── Auth/
+│   │   │   ├── AuthenticatedSessionController.php
+│   │   │   └── RegisteredUserController.php
+│   │   └── TwoFactorController.php
+│   └── Models/
+│       └── User.php
+├── resources/views/
+│   ├── auth/
+│   │   ├── login.blade.php
+│   │   ├── two-factor-setup.blade.php
+│   │   ├── two-factor-verify.blade.php
+│   │   └── two-factor-recovery.blade.php
+│   └── dashboard.blade.php
+├── routes/
+│   ├── web.php
+│   └── auth.php
+└── README.md
+```
+
+## Database Changes
+
+The users table includes additional columns for 2FA support:
+
+* `google2fa_secret` (string, nullable)
+* `google2fa_enabled` (boolean, default false)
+* `recovery_codes` (text, nullable, stored as JSON)
+
+## User Model Configuration
+
+The User model includes helper methods for managing 2FA:
+
+```php
+$user->generateRecoveryCodes();
+$user->verifyTwoFactorCode($code);
+$user->verifyRecoveryCode($code);
+$user->getQRCodeUrl();
+```
+
+## Application Flow
+
+### Registration and Login
+
+* Register a new account using `/register`
+* Login using `/login`
+* Access the dashboard after successful authentication
+
+### Enabling Two-Factor Authentication
+
+* Navigate to the dashboard
+* Click on "Enable Two-Factor Authentication"
+* Scan the QR code using Google Authenticator
+* Enter the generated 6-digit code
+* Save the provided recovery codes
+
+### Login with Two-Factor Authentication
+
+* Login with email and password
+* Redirected to 2FA verification page
+* Enter the 6-digit code from Google Authenticator
+* Successfully redirected to the dashboard
+
+### Recovery Codes
+
+* Use recovery codes if the authenticator app is unavailable
+* Each recovery code is single-use
+* New recovery codes can be generated from the dashboard
+
+### Disabling Two-Factor Authentication
+
+* Navigate to the dashboard
+* Select "Disable 2FA"
+* Confirm with password
+* Two-factor authentication is disabled
+
+## Routes and Endpoints
+
+| Method | URL                           | Description                 |
+| ------ | ----------------------------- | --------------------------- |
+| GET    | /two-factor/setup             | Show 2FA setup page         |
+| POST   | /two-factor/enable            | Enable 2FA                  |
+| GET    | /two-factor/verify            | Show verification form      |
+| POST   | /two-factor/verify            | Verify authentication code  |
+| GET    | /two-factor/recovery          | Show recovery codes         |
+| POST   | /two-factor/recovery/generate | Generate new recovery codes |
+| POST   | /two-factor/disable           | Disable 2FA                 |
+
+## Security Considerations
+
+* Google secrets are encrypted before storage
+* Recovery codes are one-time use
+* Password confirmation required for disabling 2FA
+* Session-based verification flow
+* Time-window tolerance for code verification
+
+## Testing
+
+### Create a Test User
+
+```bash
+php artisan tinker
+```
+
+```php
+$user = new App\Models\User;
+$user->name = 'Test User';
+$user->email = 'test@example.com';
+$user->password = bcrypt('password');
+$user->save();
+```
+
+## Screenshot
+### Login Page
+<img width="719" height="649" alt="image" src="https://github.com/user-attachments/assets/789356fd-a1a1-4119-bffd-2ecc78f696e3" />
+
+### Dashboard Page
+<img width="1903" height="615" alt="image" src="https://github.com/user-attachments/assets/27bc93de-8174-4fcb-b76d-f4071b25ca9f" />
+
+### Setup Two-Factor Authentication
+<img width="875" height="942" alt="image" src="https://github.com/user-attachments/assets/90ec6d4f-6b66-4f86-beed-0bdef7650211" />
+
+### Test Scenarios
+
+* Enable 2FA
+* Login with authenticator code
+* Login with recovery code
+* Disable 2FA
+
+## Troubleshooting
+
+### QR Code Not Scanning
+
+* Ensure `bacon/bacon-qr-code` is installed
+* Check PHP GD extension
+* Use manual secret entry if needed
+
+### Invalid Authentication Codes
+
+* Verify system time synchronization
+* Try previous or next code
+
+### Common Fixes
+
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+php artisan migrate:fresh
+```
+
+## Deployment Notes
+
+* Set `APP_ENV=production`
+* Set `APP_DEBUG=false`
+* Use HTTPS in production
+* Configure secure session driver
+* Enable rate limiting on login routes
+
+## Dependencies
+
+* pragmarx/google2fa-laravel
+* bacon/bacon-qr-code
+* laravel/breeze (optional)
+* laravel/framework
+
+## Future Enhancements
+
+* Email-based 2FA fallback
+* SMS verification option
+* Multiple device support
+* Admin management for 2FA
+* Audit logs for authentication events
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-source and licensed under the MIT License.
+
+## Notes
+
+This project is intended for educational and demonstration purposes and can be extended for production use with additional security and monitoring layers.
