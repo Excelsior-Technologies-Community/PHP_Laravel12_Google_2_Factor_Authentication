@@ -14,9 +14,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+
+        'status',
+
+        'last_login_at',
+
         'google2fa_secret',
         'google2fa_enabled',
-        'recovery_codes'
+        'recovery_codes',
     ];
 
     protected $hidden = [
@@ -26,9 +31,17 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+
         'email_verified_at' => 'datetime',
+
+        'password' => 'hashed',
+
         'google2fa_enabled' => 'boolean',
+
         'recovery_codes' => 'array',
+
+        'last_login_at' => 'datetime',
+
     ];
 
     /**
@@ -40,10 +53,10 @@ class User extends Authenticatable
         for ($i = 0; $i < 8; $i++) {
             $codes[] = strtoupper(bin2hex(random_bytes(5)));
         }
-        
+
         $this->recovery_codes = $codes;
         $this->save();
-        
+
         return $codes;
     }
 
@@ -58,9 +71,9 @@ class User extends Authenticatable
 
         // Clean the code (remove spaces, convert to uppercase)
         $code = strtoupper(trim($code));
-        
+
         $key = array_search($code, $this->recovery_codes);
-        
+
         if ($key !== false) {
             unset($this->recovery_codes[$key]);
             $this->recovery_codes = array_values($this->recovery_codes);
@@ -81,10 +94,10 @@ class User extends Authenticatable
         }
 
         $google2fa = new Google2FA();
-        
+
         // Clean the code (remove spaces)
         $code = trim($code);
-        
+
         // Verify the code with a window of 4 (2 before, 2 after current time)
         return $google2fa->verifyKey($this->google2fa_secret, $code, 2);
     }
@@ -100,5 +113,15 @@ class User extends Authenticatable
             $this->email,
             $this->google2fa_secret
         );
+    }
+
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
+
+    public function isInactive()
+    {
+        return $this->status === 'inactive';
     }
 }
