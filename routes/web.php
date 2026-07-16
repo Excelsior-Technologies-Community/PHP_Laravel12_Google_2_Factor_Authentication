@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LoginHistoryController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disableTwoFactor'])->name('2fa.disable');
     Route::get('/two-factor/recovery', [TwoFactorController::class, 'showRecoveryCodes'])->name('2fa.recovery');
     Route::post('/two-factor/recovery/generate', [TwoFactorController::class, 'generateNewRecoveryCodes'])->name('2fa.recovery.generate');
+
+    // Login History
+    Route::get('/login-history', [LoginHistoryController::class, 'index'])->name('login.history');
 });
 
 Route::middleware('auth')->group(function () {
