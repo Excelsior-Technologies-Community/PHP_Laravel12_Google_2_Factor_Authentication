@@ -231,21 +231,24 @@ class TwoFactorController extends Controller
     {
         $token = Str::random(64);
 
+        $agent = new \Jenssegers\Agent\Agent();
+        $agent->setUserAgent($request->userAgent());
+
+        $deviceType = $agent->isTablet() ? 'Tablet' : ($agent->isMobile() ? 'Mobile' : 'Desktop');
+        $browser = $agent->browser() ?: 'Browser';
+        $browserVer = $agent->version($browser);
+        $platform = $agent->platform() ?: php_uname('s');
+        $platformVer = $agent->version($platform);
+        $deviceName = "{$deviceType} - {$browser} on {$platform}";
+
         TrustedDevice::create([
             'user_id'      => $user->id,
             'device_token' => hash('sha256', $token),
-
-            // Save browser user-agent instead of using an external package
-            'device_name'  => substr($request->userAgent() ?? 'Unknown Device', 0, 120),
-
-            'browser'      => $request->header('User-Agent'),
-
-            'platform'     => php_uname('s'),
-
+            'device_name'  => $deviceName,
+            'browser'      => $browserVer ? "{$browser} {$browserVer}" : $browser,
+            'platform'     => $platformVer ? "{$platform} {$platformVer}" : $platform,
             'ip_address'   => $request->ip(),
-
             'last_used_at' => now(),
-
             'expires_at'   => now()->addDays(30),
         ]);
 

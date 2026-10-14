@@ -48,37 +48,76 @@ class DashboardController extends Controller
 
 
 
-        return view('dashboard', compact(
+        $policyEnforced = \Illuminate\Support\Facades\Cache::get('enforce_2fa_policy', false);
 
+        return view('dashboard', compact(
             'totalUsers',
             'activeUsers',
             'inactiveUsers',
             'twoFactorUsers',
-            'users'
-
+            'users',
+            'policyEnforced'
         ));
     }
-
-
 
     /**
      * Change User Status
      */
     public function updateStatus(Request $request, $id)
     {
-
         $user = User::findOrFail($id);
-
-
         $user->status = $request->status;
-
-
         $user->save();
-
 
         return back()->with(
             'success',
             'User status updated successfully'
+        );
+    }
+
+    /**
+     * Toggle Mandatory 2FA Policy for all users
+     */
+    public function togglePolicy()
+    {
+        $current = \Illuminate\Support\Facades\Cache::get('enforce_2fa_policy', false);
+        \Illuminate\Support\Facades\Cache::forever('enforce_2fa_policy', !$current);
+        $statusText = !$current ? 'Enforced' : 'Disabled';
+
+        return back()->with(
+            'success',
+            "Mandatory 2FA Policy has been {$statusText} successfully."
+        );
+    }
+
+    /**
+     * Admin Emergency 2FA Reset for a locked-out user
+     */
+    public function emergencyReset2fa(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->google2fa_enabled = false;
+        $user->google2fa_secret = null;
+        $user->recovery_codes = null;
+        $user->save();
+
+        // Revoke all trusted devices
+        \App\Models\TrustedDevice::where('user_id', $user->id)->delete();
+
+        // Audit Log in Login History
+        \App\Models\LoginHistory::create([
+            'user_id'      => $user->id,
+            'login_method' => '2FA Emergency Reset by Admin (' . auth()->user()->name . ')',
+            'status'       => 'Success',
+            'ip_address'   => $request->ip(),
+            'user_agent'   => $request->userAgent(),
+            'logged_in_at' => now(),
+        ]);
+
+        return back()->with(
+            'success',
+            "Two-Factor Authentication for {$user->name} has been reset successfully. They can now login directly with their password."
         );
     }
 }

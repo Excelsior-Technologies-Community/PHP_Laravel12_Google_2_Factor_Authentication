@@ -33,6 +33,8 @@ Route::post(
 
     ->name('user.status');
 
+use App\Http\Controllers\TrustedDeviceController;
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -47,24 +49,28 @@ Route::middleware('auth')->group(function () {
 
     // Login History
     Route::get('/login-history', [LoginHistoryController::class, 'index'])->name('login.history');
+
+    // Trusted Devices Management
+    Route::get('/trusted-devices', [TrustedDeviceController::class, 'index'])->name('trusted.devices');
+    Route::delete('/trusted-devices/{id}', [TrustedDeviceController::class, 'revoke'])->name('trusted.devices.revoke');
+    Route::post('/trusted-devices/revoke-others', [TrustedDeviceController::class, 'revokeOthers'])->name('trusted.devices.revoke-others');
+    Route::post('/trusted-devices/revoke-all', [TrustedDeviceController::class, 'revokeAll'])->name('trusted.devices.revoke-all');
+
+    // Admin 2FA Policy & Emergency Reset
+    Route::post('/admin/toggle-2fa-policy', [DashboardController::class, 'togglePolicy'])->name('admin.toggle-2fa-policy');
+    Route::post('/admin/users/{id}/reset-2fa', [DashboardController::class, 'emergencyReset2fa'])->name('admin.users.reset-2fa');
 });
 
 Route::middleware('auth')->group(function () {
-
-
     Route::delete(
         '/users/{id}',
         [UserController::class, 'destroy']
-    )
-        ->name('users.delete');
-
-
+    )->name('users.delete');
 
     Route::get(
         '/users-export',
         [UserController::class, 'export']
-    )
-        ->name('users.export');
+    )->name('users.export');
 });
 
 // 2FA Verification Routes (no auth middleware)
