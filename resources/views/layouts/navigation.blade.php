@@ -32,11 +32,14 @@
                     <x-nav-link
                         :href="route('login.history')"
                         :active="request()->routeIs('login.history')">
-
                         {{ __('Login History') }}
-
                     </x-nav-link>
 
+                    <x-nav-link
+                        :href="route('trusted.devices')"
+                        :active="request()->routeIs('trusted.devices')">
+                        {{ __('Trusted Devices') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -117,11 +120,14 @@
             <x-responsive-nav-link
                 :href="route('login.history')"
                 :active="request()->routeIs('login.history')">
-
                 {{ __('Login History') }}
-
             </x-responsive-nav-link>
 
+            <x-responsive-nav-link
+                :href="route('trusted.devices')"
+                :active="request()->routeIs('trusted.devices')">
+                {{ __('Trusted Devices') }}
+            </x-responsive-nav-link>
         </div>
 
         <!-- Responsive Settings Options -->

@@ -1,31 +1,68 @@
 <x-app-layout>
 
     <x-slot name="header">
-
-        <div class="flex justify-between items-center">
-
-            <h2 class="font-bold text-2xl text-gray-800">
-                Admin Dashboard
-            </h2>
-
-        </div>
-
-    </x-slot>
-
-
-    <div class="py-8 bg-gray-100 min-h-screen">
-
-        <div class="max-w-7xl mx-auto px-4">
-
-
-            @if(session('success'))
-
-            <div class="mb-6 bg-green-100 border border-green-300 text-green-700 px-5 py-3 rounded-lg shadow">
-
-                {{session('success')}}
-
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="font-bold text-2xl text-gray-800 flex items-center gap-2">
+                    <span>🛡️</span> Admin Dashboard
+                </h2>
+                <p class="text-xs text-gray-500 mt-1">
+                    User Management, 2FA Security Enforcement & Authentication Controls
+                </p>
             </div>
 
+            <!-- Mandatory 2FA Policy Toggle (Feature 4) -->
+            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full {{ $policyEnforced ? 'bg-green-500 animate-pulse' : 'bg-gray-400' }}"></span>
+                    <span class="text-xs font-bold text-gray-700">
+                        Mandatory 2FA Policy:
+                        <span class="{{ $policyEnforced ? 'text-green-600' : 'text-gray-500' }}">
+                            {{ $policyEnforced ? 'ACTIVE (All Users)' : 'DISABLED' }}
+                        </span>
+                    </span>
+                </div>
+                <form method="POST" action="{{ route('admin.toggle-2fa-policy') }}">
+                    @csrf
+                    <button type="submit" class="text-xs font-bold px-3 py-1.5 rounded-lg transition {{ $policyEnforced ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm' }}">
+                        {{ $policyEnforced ? 'Turn OFF' : 'Turn ON' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </x-slot>
+
+    <div class="py-8 bg-gray-100 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4">
+
+            @if(session('success'))
+            <div class="mb-6 bg-green-100 border border-green-300 text-green-700 px-5 py-3 rounded-lg shadow">
+                {{session('success')}}
+            </div>
+            @endif
+
+            <!-- 2FA Vulnerability Security Banner (Feature 3) -->
+            @if(!auth()->user()->google2fa_enabled)
+            <div class="mb-8 bg-gradient-to-r from-amber-500 via-rose-500 to-red-600 rounded-2xl p-5 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-2xl shrink-0 shadow-inner">
+                        ⚠️
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-white/20 px-2 py-0.5 rounded text-[11px] font-extrabold uppercase tracking-wider">High Risk</span>
+                            <h3 class="font-extrabold text-lg tracking-tight">Your Account is at Risk! (Security Alert)</h3>
+                        </div>
+                        <p class="text-sm text-white/90 mt-1">
+                            Two-Factor Authentication is not enabled on your account. Protect your account from unauthorized access and credential theft by enabling 2FA now.
+                        </p>
+                    </div>
+                </div>
+                <a href="{{ route('2fa.setup') }}" class="bg-white text-slate-900 hover:bg-slate-100 font-extrabold text-sm px-5 py-2.5 rounded-xl shadow-md transition shrink-0 flex items-center gap-1.5">
+                    <span>🛡️ Enable 2FA Protection</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
             @endif
 
 
@@ -254,6 +291,9 @@
                                     Status
                                 </th>
 
+                                <th class="px-6 py-4 text-left text-gray-600">
+                                    2FA Security
+                                </th>
 
                                 <th class="px-6 py-4 text-left text-gray-600">
                                     Last Login
@@ -327,8 +367,25 @@
 
                                 </td>
 
-
-
+                                <td class="px-6 py-4">
+                                    @if($user->google2fa_enabled)
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> 2FA Active
+                                            </span>
+                                            <form method="POST" action="{{ route('admin.users.reset-2fa', $user->id) }}" onsubmit="return confirm('Emergency 2FA Reset: Are you sure you want to reset Two-Factor Authentication for {{ $user->name }}? Their secret and recovery codes will be erased, and they will be able to log in directly with their password.');">
+                                                @csrf
+                                                <button type="submit" class="text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 transition shadow-2xs flex items-center gap-1" title="Emergency 2FA Reset">
+                                                    <span>🔄 Reset</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full text-xs font-medium">
+                                            Disabled
+                                        </span>
+                                    @endif
+                                </td>
 
                                 <td class="px-6 py-4 text-gray-600">
 
